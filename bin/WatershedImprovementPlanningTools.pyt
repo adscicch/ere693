@@ -63,7 +63,52 @@ class TopoHydro(object):
             
     def execute(self, parameters, messages):
         try:
-            log("Parameters are %s, %s, %s" % (parameters[0].valueAsText, parameters[1].valueAsText, parameters[2].valueAsText))
+		
+
+		# Local variables:
+		DEM = "DEM"
+		Fill_DEM1 = "E:\\GIS_M\\Lab_06\\Lab06\\Lab06Data.gdb\\Fill_DEM1"
+		AnalysisMask = "AnalysisMask"
+		Output_drop_raster = ""
+		RasterMask01 = "E:\\GIS_M\\Lab_06\\Lab06\\Lab06Data.gdb\\RasterMask01"
+		FlowDir_Fill1 = "E:\\GIS_M\\Lab_06\\Lab06\\Lab06Data.gdb\\FlowDir_Fill1"
+		FlowAcc_Flow1 = "E:\\GIS_M\\Lab_06\\Lab06\\Lab06Data.gdb\\FlowAcc_Flow1"
+		rastercalc = "E:\\GIS_M\\Lab_06\\Lab06\\Lab06Data.gdb\\rastercalc"
+		Reclass_rast1 = "E:\\GIS_M\\Lab_06\\Lab06\\Lab06Data.gdb\\Reclass_rast1"
+		StreamT_Reclass1 = "E:\\GIS_M\\Lab_06\\Lab06\\Lab06Data.gdb\\StreamT_Reclass1"
+
+		# Set Geoprocessing environments
+		arcpy.env.snapRaster = DEM
+
+		# Process: Fill
+		arcpy.gp.Fill_sa(DEM, Fill_DEM1, "")
+
+		# Process: Flow Direction
+		tempEnvironment0 = arcpy.env.cellSize
+		arcpy.env.cellSize = "MAXOF"
+		tempEnvironment1 = arcpy.env.mask
+		arcpy.env.mask = AnalysisMask
+		arcpy.gp.FlowDirection_sa(Fill_DEM1, FlowDir_Fill1, "NORMAL", Output_drop_raster)
+		arcpy.env.cellSize = tempEnvironment0
+		arcpy.env.mask = tempEnvironment1
+
+		# Process: Polygon to Raster
+		arcpy.PolygonToRaster_conversion(AnalysisMask, "OBJECTID", RasterMask01, "CELL_CENTER", "NONE", "140")
+
+		# Process: Flow Accumulation
+		arcpy.gp.FlowAccumulation_sa(FlowDir_Fill1, FlowAcc_Flow1, "", "FLOAT")
+
+		# Process: Raster Calculator
+		arcpy.gp.RasterCalculator_sa("(\"%FlowAcc_Flow1%\"*1600)/43560", rastercalc)
+
+		# Process: Reclassify
+		arcpy.gp.Reclassify_sa(rastercalc, "Value", "0 516.96972700000003 NODATA;516.96972700000003 22532.3046875 1", Reclass_rast1, "DATA")
+
+		# Process: Stream to Feature (2)
+		arcpy.gp.StreamToFeature_sa(Reclass_rast1, FlowDir_Fill1, StreamT_Reclass1, "SIMPLIFY")
+
+
+           #log("Parameters are %s, %s, %s" % (parameters[0].valueAsText, parameters[1].valueAsText, parameters[2].valueAsText))
         except Exception as err:
             log(traceback.format_exc())
             log(err)
