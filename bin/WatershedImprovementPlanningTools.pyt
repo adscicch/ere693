@@ -79,31 +79,41 @@ class TopoHydro(object):
 			arcpy.env.snapRaster = DEM
 
 			# Process: Fill
-			arcpy.gp.Fill_sa(DEM, Fill_DEM1, "")
+		
+			###arcpy.gp.Fill_sa(DEM, Fill_DEM1, "")
+			Fill_DEM1 = arcpy.gp.Fill_sa(DEM, "")
 
 			# Process: Flow Direction
 			tempEnvironment0 = arcpy.env.cellSize
 			arcpy.env.cellSize = "MAXOF"
 			tempEnvironment1 = arcpy.env.mask
 			arcpy.env.mask = AnalysisMask
-			arcpy.gp.FlowDirection_sa(Fill_DEM1, FlowDir_Fill1, "NORMAL", Output_drop_raster)
+			
+			###arcpy.gp.FlowDirection_sa(Fill_DEM1, FlowDir_Fill1, "NORMAL", Output_drop_raster)
+			FlowDir_Fill1=arcpy.gp.FlowDirection_sa(Fill_DEM1, "NORMAL", Output_drop_raster)
+			
 			arcpy.env.cellSize = tempEnvironment0
 			arcpy.env.mask = tempEnvironment1
 
 			# Process: Polygon to Raster
-			arcpy.PolygonToRaster_conversion(AnalysisMask, "OBJECTID", RasterMask01, "CELL_CENTER", "NONE", "140")
+			###arcpy.PolygonToRaster_conversion(AnalysisMask, "OBJECTID", RasterMask01, "CELL_CENTER", "NONE", "140")
+			RasterMask01=arcpy.PolygonToRaster_conversion(AnalysisMask, "OBJECTID", "CELL_CENTER", "NONE", "140")
 
 			# Process: Flow Accumulation
-			arcpy.gp.FlowAccumulation_sa(FlowDir_Fill1, FlowAcc_Flow1, "", "FLOAT")
+			###arcpy.gp.FlowAccumulation_sa(FlowDir_Fill1, FlowAcc_Flow1, "", "FLOAT")
+			FlowAcc_Flow1= arcpy.gp.FlowAccumulation_sa(FlowDir_Fill1, "", "FLOAT")
 
 			# Process: Raster Calculator
-			arcpy.gp.RasterCalculator_sa("(\"%FlowAcc_Flow1%\"*1600)/43560", rastercalc)
+			###arcpy.gp.RasterCalculator_sa("(\"%FlowAcc_Flow1%\"*1600)/43560", rastercalc)
+			rastercalc = arcpy.gp.RasterCalculator_sa("(\"%FlowAcc_Flow1%\"*1600)/43560")
 
 			# Process: Reclassify
-			arcpy.gp.Reclassify_sa(rastercalc, "Value", "0 516.96972700000003 NODATA;516.96972700000003 22532.3046875 1", Reclass_rast1, "DATA")
-
+			###arcpy.gp.Reclassify_sa(rastercalc, "Value", "0 516.96972700000003 NODATA;516.96972700000003 22532.3046875 1", Reclass_rast1, "DATA")
+			Reclass_rast1 = arcpy.gp.Reclassify_sa(rastercalc, "Value", "0 516.96972700000003 NODATA;516.96972700000003 22532.3046875 1", "DATA")
+			
 			# Process: Stream to Feature (2)
-			arcpy.gp.StreamToFeature_sa(Reclass_rast1, FlowDir_Fill1, StreamT_Reclass1, "SIMPLIFY")
+			###arcpy.gp.StreamToFeature_sa(Reclass_rast1, FlowDir_Fill1, StreamT_Reclass1, "SIMPLIFY")
+			StreamT_Reclass1= arcpy.gp.StreamToFeature_sa(Reclass_rast1, FlowDir_Fill1, "SIMPLIFY")
 
 
 			   #log("Parameters are %s, %s, %s" % (parameters[0].valueAsText, parameters[1].valueAsText, parameters[2].valueAsText))
